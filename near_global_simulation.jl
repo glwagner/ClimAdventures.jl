@@ -1,0 +1,119 @@
+using ClimaOcean
+using Oceananigans
+using Oceananigans.Units
+using Oceananigans.TurbulenceClosures: IsopycnalSkewSymmetricDiffusivity
+using Printf
+using GLMakie
+
+arch = CPU()
+resolution = 4
+Nx = 360 ÷ resolution
+Ny = 160 ÷ resolution
+Nz = 10
+
+grid = LatitudeLongitudeGrid(arch;
+                             size = (Nx, Ny, Nz),
+                             halo = (7, 7, 3),
+                             latitude = (-80, 80),
+                             longitude = (0, 360),
+                             z = (-1000, 0))
+
+vitd = VerticallyImplicitTimeDiscretization()
+vertical_mixing = VerticalScalarDiffusivity(vitd, ν=1e-1, κ=1e-2)
+horizontal_viscosity = HorizontalScalarDiffusivity(ν=10000)
+gm_redi = IsopycnalSkewSymmetricDiffusivity(κ_skew=2000, κ_symmetric=2000)
+closure = (vertical_mixing, horizontal_viscosity, gm_redi)
+momentum_advection = VectorInvariant()
+ocean = ocean_simulation(grid; closure, momentum_advection)
+
+Tᵢ(λ, φ, z=0) = 30 * cosd(φ) + rand()
+Sᵢ(λ, φ, z) = 28 - 5e-3 * z
+set!(ocean.model, T=Tᵢ, S=Sᵢ)
+
+atmos_grid = LatitudeLongitudeGrid(arch;
+                                   size = (Nx, Ny),
+                                   halo = (7, 7),
+                                   latitude = (-80, 80),
+                                   longitude = (0, 360),
+                                   topology = (Periodic, Bounded, Flat))
+
+# Build and run an OceanSeaIceModel (with no sea ice component) forced by JRA55 reanalysis
+atmos_times = range(0, 1day, length=24)
+atmosphere = PrescribedAtmosphere(atmos_grid, atmos_times)
+
+zonal_wind(λ, φ) = 4 * sind(2φ)^2 - 2 * exp(-(abs(φ) - 12)^2 / 72)
+sunlight(λ, φ) = -200 - 600 * cosd(φ)^2
+
+Ta = CenterField(atmos_grid)
+ua = CenterField(atmos_grid)
+Qsw = CenterField(atmos_grid)
+
+#set!(Ta, (λ, φ) -> 273.15 + 30 * cosd(φ)^2)
+set!(Ta, Tᵢ)
+set!(ua, zonal_wind)
+set!(Qsw, sunlight)
+
+parent(atmosphere.tracers.T) .= parent(Ta) .+ 273.15
+parent(atmosphere.velocities.u) .= parent(ua)
+parent(atmosphere.tracers.q) .= 0
+parent(atmosphere.downwelling_radiation.shortwave) .= parent(Qsw)
+
+radiation = Radiation(arch)
+coupled_model = ClimaOcean.OceanSeaIceModel(ocean; atmosphere, radiation)
+#coupled_model = ClimaOcean.OceanSeaIceModel(ocean)
+simulation = Simulation(coupled_model, Δt=10minutes, stop_iteration=100)
+
+function progress(sim)
+    ocean = sim.model.ocean
+    T = ocean.model.tracers.T
+    S = ocean.model.tracers.S
+    u, v, w = ocean.model.velocities
+
+    msg = @sprintf("%d: %s, max|u|: (%.2e, %.2e, %.2e)",
+                   iteration(sim), prettytime(sim),
+                   maximum(abs, u),
+                   maximum(abs, v),
+                   maximum(abs, w))
+
+    msg *= @sprintf(", extrema(T): (%.2f, %.2f), extrema(S): (%.2f, %.2f)", 
+                    minimum(T), maximum(T), minimum(S), maximum(S))
+
+    ΣQ = simulation.model.fluxes.total.ocean.heat
+    Ql = simulation.model.fluxes.turbulent.fields.latent_heat
+    Qs = simulation.model.fluxes.turbulent.fields.sensible_heat
+    Fv = simulation.model.fluxes.turbulent.fields.water_vapor
+    τx = simulation.model.fluxes.turbulent.fields.x_momentum
+    τy = simulation.model.fluxes.turbulent.fields.y_momentum
+
+    msg *= @sprintf(", extrema(ΣQ): (%.2e, %.2e), extrema(Ql): (%.2e, %.2e), extrema(Qs): (%.2e, %.2e), max|τ|: (%.2e, %.2e)",
+                    minimum(ΣQ),
+                    maximum(ΣQ),
+                    minimum(Ql),
+                    maximum(Ql),
+                    minimum(Qs),
+                    maximum(Qs),
+                    maximum(abs, τx),
+                    maximum(abs, τy))
+                    
+    @info msg
+                    
+    return nothing
+end
+
+add_callback!(simulation, progress, IterationInterval(1))
+
+u, v, w = ocean.model.velocities
+T = ocean.tracers.T
+S = ocean.tracers.S
+ζ = ∂x(v) - ∂y(u)
+
+ow = JLD2OutputWriter(ocean.model, (; u, v, w, T, S, ζ),
+                      filename = "ocean.jld2",
+                      indices = (:, :, grid.Nz),
+                      schedule = TimeInterval(3hours),
+                      overwrite_existing = true)
+
+ocean.output_writers[:surface] = ow
+
+run!(simulation)
+
