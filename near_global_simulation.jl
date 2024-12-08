@@ -3,10 +3,10 @@ using Oceananigans
 using Oceananigans.Units
 using Oceananigans.TurbulenceClosures: IsopycnalSkewSymmetricDiffusivity
 using Printf
-using GLMakie
+#using GLMakie
 
-arch = CPU()
-resolution = 4
+arch = GPU()
+resolution = 1//6
 Nx = 360 ÷ resolution
 Ny = 160 ÷ resolution
 Nz = 10
@@ -60,8 +60,7 @@ parent(atmosphere.downwelling_radiation.shortwave) .= parent(Qsw)
 
 radiation = Radiation(arch)
 coupled_model = ClimaOcean.OceanSeaIceModel(ocean; atmosphere, radiation)
-#coupled_model = ClimaOcean.OceanSeaIceModel(ocean)
-simulation = Simulation(coupled_model, Δt=10minutes, stop_iteration=100)
+simulation = Simulation(coupled_model, Δt=2minutes, stop_time=60days)
 
 function progress(sim)
     ocean = sim.model.ocean
@@ -100,17 +99,27 @@ function progress(sim)
     return nothing
 end
 
-add_callback!(simulation, progress, IterationInterval(1))
+add_callback!(simulation, progress, IterationInterval(100))
 
 u, v, w = ocean.model.velocities
-T = ocean.tracers.T
-S = ocean.tracers.S
+T = ocean.model.tracers.T
+S = ocean.model.tracers.S
 ζ = ∂x(v) - ∂y(u)
+fields = (; u, v, w, T, S, ζ)
 
-ow = JLD2OutputWriter(ocean.model, (; u, v, w, T, S, ζ),
+fluxes = (;
+  ΣQ = simulation.model.fluxes.total.ocean.heat,
+  Ql = simulation.model.fluxes.turbulent.fields.latent_heat,
+  Qs = simulation.model.fluxes.turbulent.fields.sensible_heat,
+  Fv = simulation.model.fluxes.turbulent.fields.water_vapor,
+  τx = simulation.model.fluxes.turbulent.fields.x_momentum,
+  τy = simulation.model.fluxes.turbulent.fields.y_momentum
+)
+
+ow = JLD2OutputWriter(ocean.model, merge(fields, fluxes),
                       filename = "ocean.jld2",
                       indices = (:, :, grid.Nz),
-                      schedule = TimeInterval(3hours),
+                      schedule = TimeInterval(12hours),
                       overwrite_existing = true)
 
 ocean.output_writers[:surface] = ow
