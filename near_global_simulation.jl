@@ -6,7 +6,7 @@ using Printf
 #using GLMakie
 
 arch = GPU()
-resolution = 1//6
+resolution = 1//4
 Nx = 360 ÷ resolution
 Ny = 160 ÷ resolution
 Nz = 10
@@ -19,15 +19,17 @@ grid = LatitudeLongitudeGrid(arch;
                              z = (-1000, 0))
 
 vitd = VerticallyImplicitTimeDiscretization()
-vertical_mixing = VerticalScalarDiffusivity(vitd, ν=1e-1, κ=1e-2)
+vertical_mixing = VerticalScalarDiffusivity(vitd, ν=1e-2, κ=1e-2)
 horizontal_viscosity = HorizontalScalarDiffusivity(ν=10000)
 gm_redi = IsopycnalSkewSymmetricDiffusivity(κ_skew=2000, κ_symmetric=2000)
 closure = (vertical_mixing, horizontal_viscosity, gm_redi)
 momentum_advection = VectorInvariant()
-ocean = ocean_simulation(grid; closure, momentum_advection)
+#ocean = ocean_simulation(grid; closure, momentum_advection)
+ocean = ocean_simulation(grid; closure=vertical_mixing)
 
-Tᵢ(λ, φ, z=0) = 30 * cosd(φ) + rand()
-Sᵢ(λ, φ, z) = 28 - 5e-3 * z
+Tatm(λ, φ, z=0) = 30 * cosd(φ)
+Tᵢ(λ, φ, z) = 30 * (1 - tanh((abs(φ) - 40) / 5)) / 2 + rand()
+Sᵢ(λ, φ, z) = 28 - 5e-3 * z + rand()
 set!(ocean.model, T=Tᵢ, S=Sᵢ)
 
 atmos_grid = LatitudeLongitudeGrid(arch;
@@ -49,7 +51,7 @@ ua = CenterField(atmos_grid)
 Qsw = CenterField(atmos_grid)
 
 #set!(Ta, (λ, φ) -> 273.15 + 30 * cosd(φ)^2)
-set!(Ta, Tᵢ)
+set!(Ta, Tatm)
 set!(ua, zonal_wind)
 set!(Qsw, sunlight)
 
@@ -60,7 +62,7 @@ parent(atmosphere.downwelling_radiation.shortwave) .= parent(Qsw)
 
 radiation = Radiation(arch)
 coupled_model = ClimaOcean.OceanSeaIceModel(ocean; atmosphere, radiation)
-simulation = Simulation(coupled_model, Δt=2minutes, stop_time=60days)
+simulation = Simulation(coupled_model, Δt=2minutes, stop_time=4 * 360days)
 
 function progress(sim)
     ocean = sim.model.ocean
@@ -117,9 +119,9 @@ fluxes = (;
 )
 
 ow = JLD2OutputWriter(ocean.model, merge(fields, fluxes),
-                      filename = "ocean.jld2",
+                      filename = "ocean2.jld2",
                       indices = (:, :, grid.Nz),
-                      schedule = TimeInterval(12hours),
+                      schedule = TimeInterval(4days),
                       overwrite_existing = true)
 
 ocean.output_writers[:surface] = ow
