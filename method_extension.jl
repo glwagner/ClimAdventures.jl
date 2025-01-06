@@ -33,7 +33,7 @@ function time_step!(atmos::SpeedyWeather.Simulation)
     return nothing
 end
 
-update_model_field_time_series!(::SpeedyWeather.Simulation) = nothing
+update_model_field_time_series!(::SpeedyWeather.Simulation, time) = nothing
 
 ####
 #### Extending inputs to flux computation
