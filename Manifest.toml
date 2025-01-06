@@ -262,7 +262,7 @@ weakdeps = ["SparseArrays"]
 
 [[deps.ClimaOcean]]
 deps = ["Adapt", "CFTime", "CUDA", "ClimaSeaIce", "CubicSplines", "DataDeps", "Dates", "Downloads", "ImageMorphology", "JLD2", "KernelAbstractions", "MPI", "NCDatasets", "Oceananigans", "OffsetArrays", "OrthogonalSphericalShellGrids", "Printf", "Scratch", "SeawaterPolynomials", "StaticArrays", "Statistics", "SurfaceFluxes", "Thermodynamics"]
-git-tree-sha1 = "2c5f65b22d963387f3f90657123a4a7b962e244b"
+git-tree-sha1 = "5a67ed4351fa3dbab32ef257b1c1e0ac76121b5e"
 repo-rev = "ss-glw-mk/branch-for-coupling-to-speedy"
 repo-url = "https://github.com/CliMA/ClimaOcean.jl.git"
 uuid = "0376089a-ecfe-4b0e-a64f-9c555d74d754"

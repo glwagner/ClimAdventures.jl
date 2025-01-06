@@ -35,27 +35,6 @@ end
 
 update_model_field_time_series!(::SpeedyWeather.Simulation) = nothing
 
-#####
-##### Extensions for interpolation between the ocean/sea-ice model and the atmospheric model
-#####
-
-import ClimaOcean.OceanSeaIceModels.Atmospheres: 
-                    regrid_fluxes_to_atmospheric_model!, 
-                    interpolate_atmospheric_state!
-
-# Interpolate the atmospheric surface fields to the ocean/sea-ice model grid
-function interpolate_atmospheric_state!(surface_atmosphere_state, 
-                                        interpolated_prescribed_freshwater_flux, 
-                                        atmos::SpeedyWeather.Simulation, 
-                                        grid, clock)
-    nothing
-end
-
-# Regrid the fluxes from the ocean/sea-ice grid to the atmospheric model grid
-function regrid_fluxes_to_atmospheric_model!(atmos::SpeedyWeather.Simulation, net_tracer_fluxes, centered_velocity_fluxes)
-    nothing
-end
-
 ####
 #### Extending inputs to flux computation
 ####
@@ -78,3 +57,24 @@ using SpeedyWeather: EarthAtmosphere
 Base.eltype(::EarthAtmosphere{FT}) where FT = FT
 
 thermodynamics_parameters(atmos::SpeedyWeather.Simulation) = SpeedyWeatherParameters{FT}(atmos.model.atmosphere)
+
+#####
+##### Extensions for interpolation between the ocean/sea-ice model and the atmospheric model
+#####
+
+import ClimaOcean.OceanSeaIceModels.Atmospheres: 
+                    regrid_fluxes_to_atmospheric_model!, 
+                    interpolate_atmospheric_state!
+
+# Interpolate the atmospheric surface fields to the ocean/sea-ice model grid
+function interpolate_atmospheric_state!(surface_atmosphere_state, 
+                                        interpolated_prescribed_freshwater_flux, 
+                                        atmos::SpeedyWeather.Simulation, 
+                                        grid, clock)
+    nothing
+end
+
+# Regrid the fluxes from the ocean/sea-ice grid to the atmospheric model grid
+function regrid_fluxes_to_atmospheric_model!(atmos::SpeedyWeather.Simulation, net_tracer_fluxes, centered_velocity_fluxes)
+    nothing
+end

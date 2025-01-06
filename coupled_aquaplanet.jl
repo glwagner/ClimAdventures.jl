@@ -46,9 +46,9 @@ spectral_grid = SpectralGrid(trunc=121, nlayers=8, Grid=FullClenshawGrid)
 model         = PrimitiveWetModel(spectral_grid)
 atmosphere    = initialize!(model)
 
-# Initialize the Speedyweather timestepping correctly
 #=
-
+We probably need to do SpeedyWeather.first_timesteps!(atmosphere) here
+to initialize the leapfrog scheme correctly
 =# 
 
 #####
