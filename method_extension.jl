@@ -8,6 +8,10 @@ using ClimaOcean.OceanSeaIceModels.Atmospheres: HeatCapacityParameters,
 
 import Oceananigans: time_step!
 
+#####
+##### Extending the time_step! function and the `update_model_field_time_series!` function
+#####
+
 # Out-source the time_step! to the prognostic atmosphere model
 function time_step!(atmos::SpeedyWeather.Simulation) 
     progn = atmos.simulation.prognostic_variables
@@ -29,7 +33,12 @@ function time_step!(atmos::SpeedyWeather.Simulation)
     return nothing
 end
 
-# Extend the PrognosticAtmosphere functions to work with SpeedyWeather
+update_model_field_time_series!(::SpeedyWeather.Simulation) = nothing
+
+#####
+##### Extensions for interpolation between the ocean/sea-ice model and the atmospheric model
+#####
+
 import ClimaOcean.OceanSeaIceModels.Atmospheres: 
                     regrid_fluxes_to_atmospheric_model!, 
                     interpolate_atmospheric_state!
@@ -47,6 +56,10 @@ function regrid_fluxes_to_atmospheric_model!(atmos::SpeedyWeather.Simulation, ne
     nothing
 end
 
+####
+#### Extending inputs to flux computation
+####
+
 # Make sure the atmospheric parameters from SpeedyWeather can be used in the compute fluxes function
 import ClimaOcean.OceanSeaIceModels.Atmospheres: thermodynamics_parameters, 
                                                  boundary_layer_height, 
@@ -60,7 +73,8 @@ surface_layer_height(atmos::SpeedyWeather.Simulation) = 0
 # It probably should not be here but in the similarity theory type.
 boundary_layer_height(atmos::SpeedyWeather.Simulation) = 600
 
-# We just return the model
+using SpeedyWeather: EarthAtmosphere
+
 Base.eltype(::EarthAtmosphere{FT}) where FT = FT
 
 thermodynamics_parameters(atmos::SpeedyWeather.Simulation) = SpeedyWeatherParameters{FT}(atmos.model.atmosphere)

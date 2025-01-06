@@ -1,5 +1,33 @@
 using Thermodynamics.Parameters: AbstractThermodynamicsParameters
 
+import Thermodynamics.Parameters:
+    gas_constant,   #
+    molmass_dryair, # Molar mass of dry air (without moisture)
+    molmass_water,  # Molar mass of gaseous water vapor
+    molmass_ratio,  # Ratio of the molar masses of dry air to water vapor
+    R_v,            # Specific gas constant for water vapor
+    R_d,            # Specific gas constant for dry air
+    kappa_d,        # Ideal gas adiabatic exponent for dry air
+    T_0,            # Enthalpy reference temperature
+    LH_v0,          # Vaporization enthalpy at the reference temperature
+    LH_s0,          # Sublimation enthalpy at the reference temperature
+    LH_f0,          # Fusion enthalpy at the reference temperature
+    cp_d,           # Heat capacity of dry air at constant pressure
+    cp_v,           # Isobaric specific heat capacity of gaseous water vapor
+    cp_l,           # Isobaric specific heat capacity of liquid water
+    cp_i,           # Isobaric specific heat capacity of water ice
+    cv_v,           # Heat capacity of dry air at constant volume
+    cv_l,           # Isobaric specific heat capacity of liquid water
+    cv_i,           # Isobaric specific heat capacity of liquid water
+    e_int_v0,       # what? someting about reference internal energy of water vapor
+    T_freeze,       # Freezing temperature of _pure_ water
+    T_triple,       # Triple point temperature of _pure_ water
+    press_triple,   # Triple point pressure of pure water
+    T_icenuc,       # Lower temperature limit for the presence of liquid condensate
+                    # (below which homogeneous ice nucleation occurs)
+    pow_icenuc      # "Power parameter" that controls liquid/ice condensate partitioning
+                    # during partial ice nucleation
+
 struct SpeedyWeatherParameters{FT, P} <: AbstractThermodynamicsParameters{FT}
     parameters :: P
     SpeedyWeatherParameters{FT}(params::P) = new{FT, P}(params)
