@@ -1,3 +1,5 @@
+#= Figure this out later
+
 using Thermodynamics.Parameters: AbstractThermodynamicsParameters
 
 import Thermodynamics.Parameters:
@@ -27,11 +29,6 @@ import Thermodynamics.Parameters:
                     # (below which homogeneous ice nucleation occurs)
     pow_icenuc      # "Power parameter" that controls liquid/ice condensate partitioning
                     # during partial ice nucleation
-
-struct SpeedyWeatherParameters{FT, P} <: AbstractThermodynamicsParameters{FT}
-    parameters :: P
-    SpeedyWeatherParameters{FT}(params::P) where {FT, P} = new{FT, P}(params)
-end
 
 # Extend Thermodynamics functions to work with SpeedyWeather
 const SWP = SpeedyWeatherParameters
@@ -69,3 +66,4 @@ const SWP = SpeedyWeatherParameters
 @inline cv_i(p::SWP)           = 1000
 @inline kappa_d(p::SWP)        = 1.0
 
+=#

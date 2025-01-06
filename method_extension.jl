@@ -3,8 +3,7 @@
 using ClimaOcean
 using SpeedyWeather
 
-using ClimaOcean.OceanSeaIceModels.Atmospheres: HeatCapacityParameters, 
-                                                ConstitutiveParameters
+using ClimaOcean.OceanSeaIceModels.Atmospheres: PrescribedAtmosphereThermodynamicsParameters
 
 import Oceananigans: time_step!
 import Oceananigans.Models: update_model_field_time_series!
@@ -59,8 +58,9 @@ using SpeedyWeather: EarthAtmosphere
 
 Base.eltype(::EarthAtmosphere{FT}) where FT = FT
 
+# This is a _hack_!! The parameters should be consistent with what is specified in SpeedyWeather
 thermodynamics_parameters(atmos::SpeedyWeather.Simulation) = 
-    SpeedyWeatherParameters{eltype(atmos.model.atmosphere)}(atmos.model.atmosphere)
+    PrescribedAtmosphereThermodynamicsParameters(eltype(atmos.model.atmosphere))
 
 #####
 ##### Extensions for interpolation between the ocean/sea-ice model and the atmospheric model
