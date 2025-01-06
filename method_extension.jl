@@ -14,9 +14,9 @@ import Oceananigans.Models: update_model_field_time_series!
 
 # Out-source the time_step! to the prognostic atmosphere model
 function time_step!(atmos::SpeedyWeather.Simulation) 
-    progn = atmos.simulation.prognostic_variables
-    diagn = atmos.simulation.diagnostic_variables
-    model = atmos.simulation.model
+    progn = atmos.prognostic_variables
+    diagn = atmos.diagnostic_variables
+    model = atmos.model
     
     (; clock) = progn
     (; Δt, Δt_millisec) = model.time_stepping
