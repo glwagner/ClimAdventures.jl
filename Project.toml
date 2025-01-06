@@ -2,3 +2,4 @@
 ClimaOcean = "0376089a-ecfe-4b0e-a64f-9c555d74d754"
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 Oceananigans = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
+SpeedyWeather = "9e226e20-d153-4fed-8a5b-493def4f21a9"
