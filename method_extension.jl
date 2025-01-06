@@ -7,6 +7,7 @@ using ClimaOcean.OceanSeaIceModels.Atmospheres: HeatCapacityParameters,
                                                 ConstitutiveParameters
 
 import Oceananigans: time_step!
+import Oceananigans.Models: update_model_field_time_series!
 
 #####
 ##### Extending the time_step! function and the `update_model_field_time_series!` function
@@ -39,6 +40,8 @@ update_model_field_time_series!(::SpeedyWeather.Simulation, time) = nothing
 #### Extending inputs to flux computation
 ####
 
+include("speedy_weather_parameters.jl")
+
 # Make sure the atmospheric parameters from SpeedyWeather can be used in the compute fluxes function
 import ClimaOcean.OceanSeaIceModels.Atmospheres: thermodynamics_parameters, 
                                                  boundary_layer_height, 
@@ -56,7 +59,8 @@ using SpeedyWeather: EarthAtmosphere
 
 Base.eltype(::EarthAtmosphere{FT}) where FT = FT
 
-thermodynamics_parameters(atmos::SpeedyWeather.Simulation) = SpeedyWeatherParameters{FT}(atmos.model.atmosphere)
+thermodynamics_parameters(atmos::SpeedyWeather.Simulation) = 
+    SpeedyWeatherParameters{eltype(atmos.model.atmosphere)}(atmos.model.atmosphere)
 
 #####
 ##### Extensions for interpolation between the ocean/sea-ice model and the atmospheric model

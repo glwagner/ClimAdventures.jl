@@ -2,7 +2,7 @@
 
 julia_version = "1.10.7"
 manifest_format = "2.0"
-project_hash = "768580f9c8d390f9278ee5917901bf45f4528a33"
+project_hash = "5ee485954eec64f4dbf1ff4215ea57ee1e67a9d9"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -262,7 +262,7 @@ weakdeps = ["SparseArrays"]
 
 [[deps.ClimaOcean]]
 deps = ["Adapt", "CFTime", "CUDA", "ClimaSeaIce", "CubicSplines", "DataDeps", "Dates", "Downloads", "ImageMorphology", "JLD2", "KernelAbstractions", "MPI", "NCDatasets", "Oceananigans", "OffsetArrays", "OrthogonalSphericalShellGrids", "Printf", "Scratch", "SeawaterPolynomials", "StaticArrays", "Statistics", "SurfaceFluxes", "Thermodynamics"]
-git-tree-sha1 = "5a67ed4351fa3dbab32ef257b1c1e0ac76121b5e"
+git-tree-sha1 = "0b69b5ee1605cf0de1fe7717be90b2868a1c52c2"
 repo-rev = "ss-glw-mk/branch-for-coupling-to-speedy"
 repo-url = "https://github.com/CliMA/ClimaOcean.jl.git"
 uuid = "0376089a-ecfe-4b0e-a64f-9c555d74d754"
