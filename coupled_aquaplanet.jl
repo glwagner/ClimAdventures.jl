@@ -57,7 +57,11 @@ to initialize the leapfrog scheme correctly
 
 radiation   = Radiation() # Need to fix this to be consistent with SpeedyWeather? 
 earth_model = OceanSeaIceModel(ocean; atmosphere, radiation)
-earth       = ClimaOcean.Simulation(earth_model, Δt=10minutes)
+
+# We eventually need to put some checks in `OceanSeaIceModel` to make sure that the atmosphere
+# and the ocean have consistent time-step sizes
+Δt = atmosphere.model.time_stepping.Δt_sec
+earth = ClimaOcean.Simulation(earth_model; Δt)
 
 #####
 ##### Progress function
