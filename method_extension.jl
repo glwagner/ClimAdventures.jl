@@ -34,7 +34,6 @@ import ClimaOcean.OceanSeaIceModels.Atmospheres:
                     regrid_fluxes_to_atmospheric_model!, 
                     interpolate_atmospheric_state!
 
-
 # Interpolate the atmospheric surface fields to the ocean/sea-ice model grid
 function interpolate_atmospheric_state!(surface_atmosphere_state, 
                                         interpolated_prescribed_freshwater_flux, 
@@ -53,6 +52,15 @@ import ClimaOcean.OceanSeaIceModels.Atmospheres: thermodynamics_parameters,
                                                  boundary_layer_height, 
                                                  surface_layer_height
 
-function thermodynamics_parameters(atmos::SpeedyWeather.Simulation)
-    return HeatCapacityParameters()
-end
+
+# This should be the height of the surface layer in the atmospheric model
+surface_layer_height(atmos::SpeedyWeather.Simulation) = 0
+
+# This is a parameter that is used in the computation of the fluxes,
+# It probably should not be here but in the similarity theory type.
+boundary_layer_height(atmos::SpeedyWeather.Simulation) = 600
+
+# We just return the model
+Base.eltype(::EarthAtmosphere{FT}) where FT = FT
+
+thermodynamics_parameters(atmos::SpeedyWeather.Simulation) = SpeedyWeatherParameters{FT}(atmos.model.atmosphere)
