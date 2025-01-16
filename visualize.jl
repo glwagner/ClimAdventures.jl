@@ -8,7 +8,7 @@ s  = FieldTimeSeries("surface_fields.jld2", "s";  backend=InMemory(10))
 Qs = FieldTimeSeries("surface_fluxes.jld2", "Q";  backend=InMemory(10))
 τx = FieldTimeSeries("surface_fluxes.jld2", "τx"; backend=InMemory(10))
 τy = FieldTimeSeries("surface_fluxes.jld2", "τy"; backend=InMemory(10))
-ds = Dataset("run_0013/output.nc", "r")
+ds = Dataset("run_0016/output.nc", "r")
 
 n  = Observable(1)
 ut = XFaceField(s.grid)
@@ -16,15 +16,14 @@ vt = YFaceField(s.grid)
 τ  = Field(sqrt(ut^2 + vt^2))
 
 τn = @lift begin
-    set!(ut, τx[$n])
-    set!(vt, τy[$n])
+    Oceananigans.set!(ut, τx[$n])
+    Oceananigans.set!(vt, τy[$n])
     compute!(τ)
     interior(τ, :, :, 1)
 end
 
 τxn = @lift interior(τx[$n], :, :, 1)
 sn  = @lift interior(s[$n],  :, :, 1)
-# Qn  = @lift interior(Qs[$n], :, :, 1)
 ζn  = @lift reverse(ds["vor"].var[:, :, 8, $n], dims=2)
 Qn  = @lift reverse(ds["sensible_heat_flux"].var[:, :, $n], dims=2)
 

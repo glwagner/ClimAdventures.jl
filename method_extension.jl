@@ -65,18 +65,18 @@ function interpolate_atmospheric_state!(surface_atmosphere_state,
                                         grid, clock)
 
     # Get the atmospheric state on the ocean grid
-    ua = surface_atmosphere_state.u
-    va = surface_atmosphere_state.v
-    Ta = surface_atmosphere_state.T
-    qa = surface_atmosphere_state.q
-    pa = surface_atmosphere_state.p
-    Qs = surface_atmosphere_state.Qs
-    Qℓ = surface_atmosphere_state.Qℓ
+    ua = on_architecture(CPU(), surface_atmosphere_state.u)
+    va = on_architecture(CPU(), surface_atmosphere_state.v)
+    Ta = on_architecture(CPU(), surface_atmosphere_state.T)
+    qa = on_architecture(CPU(), surface_atmosphere_state.q)
+    pa = on_architecture(CPU(), surface_atmosphere_state.p)
+    Qs = on_architecture(CPU(), surface_atmosphere_state.Qs)
+    Qℓ = on_architecture(CPU(), surface_atmosphere_state.Qℓ)
 
     λ,  φ,  _ = Oceananigans.Grids.nodes(grid, Center(), Center(), Center(), with_halos=true) 
 
-    λ = Array(vec(λ))
-    φ = Array(vec(φ))
+    λ = Array(vec(on_architecture(CPU(), λ)))
+    φ = Array(vec(on_architecture(CPU(), φ)))
 
     spectral_grid = atmos.model.spectral_grid
     interpolator = RingGrids.AnvilInterpolator(Float32, spectral_grid.Grid, spectral_grid.nlat_half, length(λ))
@@ -90,12 +90,21 @@ function interpolate_atmospheric_state!(surface_atmosphere_state,
     RingGrids.interpolate!(vec(view(Qs, :, :, 1)), atmos.diagnostic_variables.physics.surface_shortwave_down, interpolator)
     RingGrids.interpolate!(vec(view(Qℓ, :, :, 1)), atmos.diagnostic_variables.physics.surface_longwave_down,  interpolator)
 
+    surface_atmosphere_state.u  .= ua 
+    surface_atmosphere_state.v  .= va 
+    surface_atmosphere_state.T  .= Ta 
+    surface_atmosphere_state.q  .= qa 
+    surface_atmosphere_state.p  .= pa 
+    surface_atmosphere_state.Qs .= Qs
+    surface_atmosphere_state.Qℓ .= Qℓ
+
     return nothing
 end
 
 using OrthogonalSphericalShellGrids: InterpolationWeights
 
-tmp_grid   = LatitudeLongitudeGrid(size=(360, 179, 1), latitude=(-89.5, 89.5), longitude=(0, 360), z = (0, 1))
+arch       = Oceananigans.architecture(grid)
+tmp_grid   = LatitudeLongitudeGrid(arch; size=(360, 179, 1), latitude=(-89.5, 89.5), longitude=(0, 360), z = (0, 1))
 tmp_field  = Field{Center, Center, Nothing}(tmp_grid)
 tmp_ongrid = Field{Center, Center, Nothing}(grid)
 
@@ -124,8 +133,9 @@ end
 
 function regrid_flux!(speedy_flux, climaocean_flux, interpolator, weights)
     interpolate!(tmp_field, climaocean_flux, weights) 
-    interior(tmp_field)[isnan.(interior(tmp_field))] .= 0 # We do not have antarctic
-    flux = FullClenshawGrid(vec(reverse(interior(tmp_field, :, :, 1), dims=2)))
+    tmp_field = on_architecture(CPU(), interior(tmp_field, :, :, 1))
+    tmp_field[isnan.(tmp_field)] .= 0 # We do not have antarctic
+    flux = FullClenshawGrid(vec(reverse(tmp_field, dims=2)))
     RingGrids.interpolate!(speedy_flux, flux, interpolator)
     return nothing
 end

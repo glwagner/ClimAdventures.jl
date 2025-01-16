@@ -14,14 +14,14 @@ using CairoMakie
 
 arch  = Oceananigans.CPU()
 depth = 5000meters
-Nz    = 10
-h     = 3 # e-folding length of the exponential
+Nz    = 40
+h     = 30 # e-folding length of the exponential
 
 r_faces = ClimaOcean.exponential_z_faces(; Nz, h, depth)
 z_faces = ZStarVerticalCoordinate(r_faces)
 
-Nx = 256 # longitudinal direction -> 250 points is about 1.5ᵒ resolution
-Ny = 128 # meridional direction -> same thing, 48 points is about 1.5ᵒ resolution
+Nx = 1440 # longitudinal direction -> 250 points is about 1.5ᵒ resolution
+Ny = 700 # meridional direction -> same thing, 48 points is about 1.5ᵒ resolution
 Nz   = length(r_faces) - 1
 grid = TripolarGrid(arch; size=(Nx, Ny, Nz), z=z_faces, halo=(4, 4, 4))
 
@@ -31,8 +31,8 @@ bottom_height = regrid_bathymetry(grid; minimum_depth=15, major_basins=1, filena
 
 grid = ImmersedBoundaryGrid(grid, GridFittedBottom(bottom_height); active_cells_map=true)
 
-momentum_advection = WENOVectorInvariant(order=3) 
-tracer_advection   = Centered()
+momentum_advection = WENOVectorInvariant() 
+tracer_advection   = WENO()
 
 free_surface = SplitExplicitFreeSurface(grid; substeps=30) 
 
@@ -64,7 +64,7 @@ ClimaOcean.set!(ocean.model, T=ECCOMetadata(:temperature),
 
 include("method_extension.jl")
 
-spectral_grid = SpectralGrid(trunc=31, nlayers=8)
+spectral_grid = SpectralGrid(trunc=31, nlayers=20)
 surface_heat_flux = PrescribedSurfaceHeatFlux()
 surface_evaporation = PrescribedSurfaceEvaporation()
 model = PrimitiveWetModel(spectral_grid; surface_heat_flux, surface_evaporation)
@@ -76,7 +76,7 @@ add!(model.output, SpeedyWeather.SurfaceFluxesOutput()...)
 SpeedyWeather.initialize!(atmosphere)
 SpeedyWeather.set_period!(atmosphere.prognostic_variables.clock, Day(400))
 SpeedyWeather.initialize!(atmosphere.prognostic_variables.clock, atmosphere.model.time_stepping)
-SpeedyWeather.set!(atmosphere.model.time_stepping, Δt=Minute(30))
+SpeedyWeather.set!(atmosphere.model.time_stepping, Δt=Minute(10))
 
 #####
 ##### Coupling the two
@@ -85,7 +85,7 @@ SpeedyWeather.set!(atmosphere.model.time_stepping, Δt=Minute(30))
 Δt = atmosphere.model.time_stepping.Δt_sec
 
 radiation = ClimaOcean.Radiation(ocean_albedo=0)
-similarity_theory = SimilarityTheoryTurbulentFluxes(grid; maxiter=5)
+similarity_theory = SimilarityTheoryTurbulentFluxes(grid; maxiter=10)
 sea_ice = ClimaOcean.FreezingLimitedOceanTemperature()
 earth_model = OceanSeaIceModel(ocean, sea_ice; atmosphere, radiation, similarity_theory)
 earth = ClimaOcean.Simulation(earth_model; Δt, stop_time=400days)
